@@ -1,3 +1,7 @@
+**Check the bash commands to see below the screenshot**
+
+![](http://new.tinygrab.com/7020c0e8b0cd7c325b732eda71c5fea727bdaf6a5c.png)
+
 ```bash
 # install system dependencies
 $ sudo apt-get update
