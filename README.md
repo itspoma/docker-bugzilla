@@ -30,9 +30,11 @@ $ cd ~/bugzilla
 
 # setup bugzilla config
 $ export BUGZILLA_HOST='52.39.46.90'
+$ export BUGZILLA_VERSION='5.0'
 $ export BUGZILLA_ADMIN_EMAIL='admin@bugzilla.app'
 $ export BUGZILLA_ADMIN_PASSWORD='Xrtwg7q5bXv'
 
+$ sed "s/^ENV GITHUB_BASE_BRANCH.*/ENV GITHUB_BASE_BRANCH ${BUGZILLA_VERSION}/" -i Dockerfile
 $ sed "s/.*urlbase.*/ \$answer\{'urlbase'} = 'http:\/\/${BUGZILLA_HOST}:8080\/bugzilla';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_EMAIL.*/ \$answer\{'ADMIN_EMAIL'} = '${BUGZILLA_ADMIN_EMAIL}';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_PASSWORD.*/ \$answer\{'ADMIN_PASSWORD'} = '${BUGZILLA_ADMIN_PASSWORD}';/" -i checksetup_answers.txt
@@ -43,11 +45,11 @@ $ docker build --rm -t itspoma/docker-bugzilla .
 # run container
 $ docker run -d -t \
     --name bugzilla --hostname bugzilla \
-    --publish 8080:80 --publish 2222:22 \
+    --publish 80:80 --publish 2222:22 \
     itspoma/docker-bugzilla
 
 # to access via ssh into container
-$ docker exec -ti itspoma/docker-bugzilla bash
+$ docker exec -ti bugzilla bash
 
 # to cleanup container
 $ docker stop bugzilla
