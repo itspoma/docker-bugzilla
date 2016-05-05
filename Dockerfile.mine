@@ -1,0 +1,88 @@
+FROM centos:6
+MAINTAINER itspoma <itspoma@gmail.com>
+
+ENV MYSQL_USER root
+ENV MYSQL_PASSWORD toortoor
+
+ENV BUGZILLA_VERSION 5.0
+ENV BUGZILLA_DB bugzilladb
+ENV BUGZILLA_USER bugzillauser
+ENV BUGZILLA_PASSWORD bugspassword
+ENV ADMIN_EMAIL aaa
+ENV ADMIN_PASSWORD password
+
+# yum packagies
+RUN yum clean all \
+ && yum install -y which wget curl gcc-c++ tar git bzip2 \
+ && yum install -y mc \
+ && yum install -y epel-release
+
+# apache2
+RUN yum install -y httpd
+
+# mysql install
+RUN yum install -y mysql mysql-server
+
+# perl modules
+RUN yum -y install 'perl(parent)' \
+ && yum -y install perl-libwww-perl \
+ && yum -y install perl-core
+
+# configure the httpd
+RUN sed 's/#ServerName.*/ServerName app/' -i /etc/httpd/conf/httpd.conf \
+ && sed 's/#EnableSendfile.*/EnableSendfile off/' -i /etc/httpd/conf/httpd.conf
+
+# put vhost config for httpd
+ADD ./environment/httpd/bugzilla.conf /etc/httpd/conf.d/bugzilla.conf
+
+# mysql configure
+RUN sed 's/^user.*/user=root/' -i /etc/my.cnf \
+ && sed 's/^datadir.*/datadir=\/shared\/environment\/mysql\/data/' -i /etc/my.cnf \
+ && sed 's/^log-error.*/log-error=\/shared\/logs\/mysqld.log/' -i /etc/my.cnf
+
+ADD ./environment /shared/environment
+ADD ./logs /shared/logs
+
+RUN true \
+ && rm -rf /shared/environment/mysql/data \
+ && mysql_install_db \
+ && service mysqld restart \
+ && mysqladmin -u ${MYSQL_USER} password "${MYSQL_PASSWORD}" \
+ && mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -e "SHOW DATABASES;"
+
+# bugzilla db
+RUN service mysqld start \
+ && mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -e "CREATE DATABASE ${BUGZILLA_DB} CHARACTER SET = 'utf8';" \
+ && mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -e "GRANT ALL PRIVILEGES ON ${BUGZILLA_DB}.* TO ${BUGZILLA_USER}@localhost IDENTIFIED BY '${BUGZILLA_PASSWORD}'; FLUSH PRIVILEGES;"
+
+# bugzilla
+RUN wget -P /tmp/ https://ftp.mozilla.org/pub/mozilla.org/webtools/bugzilla-${BUGZILLA_VERSION}.tar.gz \
+ && tar -xzvf /tmp/bugzilla-*.tar.gz -C /tmp/ \
+ && rm -rf /tmp/bugzilla-*.tar.gz \
+ && rm -rf /shared/site/bugzilla \
+ && mv /tmp/bugzilla-* /shared/site/bugzilla
+
+ADD ./environment/bugzilla/localconfig /shared/site/bugzilla/localconfig
+
+# bugzilla setup
+RUN service mysqld restart \
+ && cd /shared/site/bugzilla/ && perl install-module.pl --all && cd /shared \
+ && perl /shared/site/bugzilla/checksetup.pl /shared/environment/bugzilla/checksetup_answers.txt
+
+RUN yes | cp -rf /shared/environment/bugzilla/localconfig /shared/site/bugzilla/localconfig \
+ && perl /shared/site/bugzilla/checksetup.pl /shared/environment/bugzilla/checksetup_answers.txt
+
+WORKDIR /shared
+
+EXPOSE 80
+
+CMD ["/bin/bash", "/shared/environment/init.sh"]
+
+# # to init mysql
+# /usr/bin/mysql_install_db
+#
+# # restart services
+# /sbin/service httpd restart
+# /sbin/service mysqld restart
+#
+# /bin/bash
