@@ -82,3 +82,11 @@ $ docker rm -f $(docker ps -aq)
 $ docker images -a
 $ docker rmi -f $(docker images -qa)
 ```
+
+In some cases you will need to increase the swap memory:
+```bash
+vm$ sed "s/^tmp_table_size.*/tmp_table_size = 100M/" -i /etc/my.cnf
+vm$ sed "s/^max_heap_table_size.*/max_heap_table_size = 100M/" -i /etc/my.cnf
+vm$ mysqladmin -u root shutdown
+vm$ /usr/bin/mysqld_safe &
+```
