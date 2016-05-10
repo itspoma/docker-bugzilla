@@ -39,7 +39,7 @@ $ export BUGZILLA_ADMIN_EMAIL='admin@bugzilla.app'
 $ export BUGZILLA_ADMIN_PASSWORD='Xrtwg7q5bXv'
 
 $ sed "s/^ENV GITHUB_BASE_BRANCH.*/ENV GITHUB_BASE_BRANCH ${BUGZILLA_VERSION}/" -i Dockerfile
-$ sed "s/.*urlbase.*/ \$answer\{'urlbase'} = 'http:\/\/${BUGZILLA_HOST}:8080\/bugzilla';/" -i checksetup_answers.txt
+$ sed "s/.*urlbase.*/ \$answer\{'urlbase'} = 'http:\/\/${BUGZILLA_HOST}\/bugzilla';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_EMAIL.*/ \$answer\{'ADMIN_EMAIL'} = '${BUGZILLA_ADMIN_EMAIL}';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_PASSWORD.*/ \$answer\{'ADMIN_PASSWORD'} = '${BUGZILLA_ADMIN_PASSWORD}';/" -i checksetup_answers.txt
 
@@ -54,6 +54,22 @@ $ docker run -d -t \
 
 # to access via ssh into container
 $ docker exec -ti bugzilla bash
+vm$ cd /home/bugzilla/devel/htdocs/bugzilla/
+
+# to install an bugzilla extension
+vm$ mkdir /tmp/bugzilla-ext
+vm$ cd /tmp/bugzilla-ext
+vm$ git init
+vm$ git remote add -f origin https://git.mozilla.org/webtools/bmo/bugzilla.git
+vm$ git config core.sparseCheckout true
+vm$ echo "extensions/EditComments/" >> .git/info/sparse-checkout
+vm$ git pull origin master
+vm$ cp -r extensions/* /home/bugzilla/devel/htdocs/bugzilla/extensions/
+vm$ cd /home/bugzilla/devel/htdocs/bugzilla/extensions/
+vm$ rm -rf /tmp/bugzilla-ext
+vm$ cd /home/bugzilla/devel/htdocs/bugzilla/
+vm$ perl checksetup.pl /checksetup_answers.txt
+vm$ install-module.pl Search:Sitemap # in case if some modules were missed
 
 # to cleanup container
 $ docker stop bugzilla
