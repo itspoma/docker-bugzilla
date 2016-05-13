@@ -35,13 +35,17 @@ $ cd ~/bugzilla
 # setup bugzilla config
 $ export BUGZILLA_HOST='52.39.46.90'
 $ export BUGZILLA_VERSION='5.0'
-$ export BUGZILLA_ADMIN_EMAIL='admin@bugzilla.app'
+$ export BUGZILLA_ADMIN_EMAIL='admin@bugzilla.com'
 $ export BUGZILLA_ADMIN_PASSWORD='Xrtwg7q5bXv'
+$ export BUGZILLA_REPO='https:\/\/github.com\/mozilla\/webtools-bmo-bugzilla'
+$ export BUGZILLA_REPO_BRANCH='master'
 
 $ sed "s/^ENV GITHUB_BASE_BRANCH.*/ENV GITHUB_BASE_BRANCH ${BUGZILLA_VERSION}/" -i Dockerfile
-$ sed "s/.*urlbase.*/ \$answer\{'urlbase'} = 'http:\/\/${BUGZILLA_HOST}\/bugzilla';/" -i checksetup_answers.txt
+$ sed "s/.*urlbase.*/ \$answer\{'urlbase'} = 'http:\/\/${BUGZILLA_HOST}\/bugzilla/';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_EMAIL.*/ \$answer\{'ADMIN_EMAIL'} = '${BUGZILLA_ADMIN_EMAIL}';/" -i checksetup_answers.txt
 $ sed "s/.*ADMIN_PASSWORD.*/ \$answer\{'ADMIN_PASSWORD'} = '${BUGZILLA_ADMIN_PASSWORD}';/" -i checksetup_answers.txt
+$ sed "s/^ENV GITHUB_BASE_GIT.*/ENV GITHUB_BASE_GIT ${BUGZILLA_REPO}/" -i Dockerfile
+$ sed "s/^ENV GITHUB_BASE_BRANCH.*/ENV GITHUB_BASE_BRANCH ${BUGZILLA_REPO_BRANCH}/" -i Dockerfile
 
 # build container
 $ docker build --rm -t itspoma/docker-bugzilla .
